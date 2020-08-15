@@ -3,6 +3,7 @@ const path = require('path');
 const util = require('util');
 
 const utf = require('./utf');
+const acb = require('./acb');
 
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
@@ -56,6 +57,31 @@ async function extractCpk(cpkPath, output) {
   }
 }
 exports.extractCpk = extractCpk;
+
+async function cpk2wavs(cpkPath, key, output, volume, mode, skip, mp3 = false) {
+  console.log(`Extracting ${cpkPath} ...`);
+  const cpk = await parseCpk(cpkPath);
+  if (!cpk) return;
+  if (output === undefined) output = path.parse(cpkPath).dir;
+  output = path.join(output, cpkPath.replace(".cpk.bytes", ""));
+  let acbBuffer, awbBuffer, acbFile;
+  for (let i = 0; i < cpk.toc.length; i++) {
+    const item = cpk.toc[i];
+    let buffer = cpk.buffer;
+    const offset = (Number)(cpk.info.TocOffset + item.FileOffset);
+    let fileBuffer = buffer.slice(offset, offset + item.FileSize);
+    fileBuffer = extract(fileBuffer);
+    if (item.FileName.includes("acb")) {
+      acbBuffer = fileBuffer;
+      acbFile = item.FileName;
+    }
+    if (item.FileName.includes("awb")) {
+      awbBuffer = fileBuffer;
+    }
+  }
+  acb.acb2wavs(acbFile, key, output, volume, mode, skip, acbBuffer, awbBuffer, mp3)
+}
+exports.cpk2wavs = cpk2wavs;
 
 function extract(buffer) {
   if ('CRILAYLA' !== buffer.slice(0, 0x8).toString()) return buffer;

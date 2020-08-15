@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/kohos/CriTools/issues"
   },
-  "homepage": "https://github.com/kohos/CriTools#readme"
+  "homepage": "https://github.com/kohos/CriTools#readme",
+  "dependencies": {
+    "node-lame": "^1.2.2"
+  }
 }

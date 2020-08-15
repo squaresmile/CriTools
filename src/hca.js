@@ -5,6 +5,7 @@ const path = require('path');
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 const appendFile = util.promisify(fs.appendFile);
+const Lame = require("node-lame").Lame;
 
 // DECRYPT START
 function initAthTable(table, type, key) {
@@ -850,7 +851,7 @@ async function decodeHca(buffer, key, awbKey, volume) {
 }
 exports.decodeHca = decodeHca;
 
-async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData) {
+async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData, mp3 = false) {
   const wavRiff = Buffer.alloc(36);
   wavRiff.write('RIFF', 0);
   wavRiff.write('WAVEfmt ', 8);
@@ -874,7 +875,8 @@ async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData) 
   wav.riffSize = 0x1C + wavData.length + wav.dataSize;
   wavData.writeUInt32LE(wav.dataSize, 0x4);
   wavRiff.writeUInt32LE(wav.riffSize, 0x4);
-  await writeFile(wavPath, Buffer.concat([wavRiff, wavData]));
+  // await writeFile(wavPath, Buffer.concat([wavRiff, wavData]));
+  let outFileBuffers = [wavRiff, wavData];
   const buffer = Buffer.alloc(0xFFFFF);
   let n = 0, once = 0;
   for (let i = 0; i < pcmData.length; i++) {
@@ -904,15 +906,30 @@ async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData) 
     }
     if (once === 0) once = n;
     if (n + once > buffer.length) {
-      await appendFile(wavPath, buffer.slice(0, n));
+      // await appendFile(wavPath, buffer.slice(0, n));
+      let outBuff = Buffer.alloc(n);
+      buffer.copy(outBuff, 0, 0, n);
+      outFileBuffers.push(outBuff);
       n = 0;
     }
   }
-  if (n > 0) await appendFile(wavPath, buffer.slice(0, n));
+  // if (n > 0) await appendFile(wavPath, buffer.slice(0, n));
+  if (n > 0) outFileBuffers.push(buffer.slice(0, n));
+  let audioFileBuffer = Buffer.concat(outFileBuffers);
+  if (mp3) {
+    let mp3Path = wavPath.replace("wav", "mp3");
+    const encoder = new Lame({
+      "output": mp3Path,
+      "bitrate": 128
+    }).setBuffer(audioFileBuffer);
+    encoder.encode();
+  } else {
+    await writeFile(wavPath, audioFileBuffer);
+  }
 }
 exports.writeWavFile = writeWavFile;
 
-async function decodeHcaToWav(buffer, key, awbKey, wavPath, volume, mode) {
+async function decodeHcaToWav(buffer, key, awbKey, wavPath, volume, mode, mp3 = false) {
   if (mode === undefined || mode === null) mode = 16;
   if (typeof (buffer) === 'string') {
     const pathInfo = path.parse(buffer);
@@ -920,7 +937,7 @@ async function decodeHcaToWav(buffer, key, awbKey, wavPath, volume, mode) {
     if (wavPath === undefined) wavPath = path.join(pathInfo.dir, pathInfo.name + '.wav');
   }
   const hca = await decodeHca(buffer, key, awbKey, volume);
-  console.log(`Writing ${path.parse(wavPath).base}...`);
-  await writeWavFile(wavPath, mode, hca.channelCount, hca.samplingRate, hca.pcmData);
+  // console.log(`Writing ${path.parse(wavPath).base}...`);
+  await writeWavFile(wavPath, mode, hca.channelCount, hca.samplingRate, hca.pcmData, mp3);
 }
 exports.decodeHcaToWav = decodeHcaToWav;

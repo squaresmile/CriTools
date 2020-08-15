@@ -24,6 +24,7 @@ function usage() {
   console.log(`\tdecrypt_hca [-k <key>] [-w <awbKey>] [-t <type>] <hcaPath>...`);
   console.log(`\tacb_mix [-k <key>] [-o <outputDir>] [-v <volume>] [-m <mode>] [-s] <acbPath>...`);
   console.log(`\textract_cpk [-o <outputDir>] <cpkPath>...`);
+  console.log(`\cpk2wavs [-k <key>] [-o <outputDir>] [-v <volume>] [-m <mode>] [-s] <cpkPath>...`);
   console.log(`Options:`);
   console.log(`\t-d / --decrypt          Decrypt hca files`);
   console.log(`\t-k / --key <key>        Decrypt key`);
@@ -33,6 +34,7 @@ function usage() {
   console.log(`\t-v / --volume <volume>  Wav Volume (Default: 1.0)`);
   console.log(`\t-m / --mode <mode>      Wav Bit Mode (Default: 16)`);
   console.log(`\t-s / --skip             Skip exists files`);
+  console.log(`\t--mp3                   Output mp3 files for cpk2wavs`);
 }
 
 async function handlePathes(pathes, ext) {
@@ -69,7 +71,7 @@ async function handlePathes(pathes, ext) {
     usage();
     return;
   }
-  let decrypt = false, key = undefined, awbKey = undefined, output = undefined, volume = 1, mode = 16, type = 1, skip = false;
+  let decrypt = false, key = undefined, awbKey = undefined, output = undefined, volume = 1, mode = 16, type = 1, skip = false, mp3 = false;
   let i = 3;
   const pathes = [];
   while (i < argv.length) {
@@ -90,6 +92,8 @@ async function handlePathes(pathes, ext) {
       type = parseInt(argv.splice(i, 1)[0], 10);
     } else if (arg === '-s' || arg === '--skip') {
       skip = true;
+    } else if (arg === '--mp3') {
+      mp3 = true;
     } else {
       pathes.push(arg);
     }
@@ -146,11 +150,14 @@ async function handlePathes(pathes, ext) {
         await handlePathes(pathes, '.cpk');
         for (let i = 0; i < pathes.length; i++) await cpk.extractCpk(pathes[i], output);
         break;
+      case 'cpk2wavs':
+        await handlePathes(pathes, '.bytes');
+        for (let i = 0; i < pathes.length; i++) await cpk.cpk2wavs(pathes[i], key, output, volume, mode, skip, mp3);
+        break;
       default:
         usage();
         break;
     }
-    console.log('FINISH!');
   } catch (e) {
     console.error(`ERROR: ${e.message}`);
     debugger;
