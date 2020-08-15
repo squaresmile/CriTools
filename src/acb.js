@@ -203,6 +203,11 @@ async function acb2hcas(acbPath, key, hcaDir, type, skip) {
   const pathInfo = path.parse(acbPath);
   console.log(`Parsing ${pathInfo.base}...`);
   const acb = await parseAcb(acbPath);
+  let cueNameMap = {};
+  for (let i = 0; i < acb.CueNameTable.length; i++) {
+    const cueName = acb.CueNameTable[i];
+    cueNameMap[cueName.CueIndex] = cueName.CueName;
+  }
   if (hcaDir === undefined) hcaDir = path.join(pathInfo.dir, acb.Name);
   if (!fs.existsSync(hcaDir)) {
     await mkdir(hcaDir, { recursive: true });
@@ -217,7 +222,12 @@ async function acb2hcas(acbPath, key, hcaDir, type, skip) {
     const isMemory = Waveform.Streaming === 0;
     const hcaBuffer = isMemory ? acb.memoryHcas[Waveform.MemoryAwbId] : acb.streamHcas[Waveform.StreamAwbPortNo][Waveform.StreamAwbId];
     const awbKey = isMemory ? acb.memoryHcas.config.key : acb.streamHcas[Waveform.StreamAwbPortNo].config.key;
-    const name = isMemory ? `memory_${++memory}.hca` : `stream_${++stream}.hca`;
+    let name = "";
+    if (i in cueNameMap) {
+      name = `${cueNameMap[i]}.hca`;
+    } else {
+      name = isMemory ? `memory_${++memory}.hca` : `stream_${++stream}.hca`;
+    }
     const hcaPath = path.join(hcaDir, name);
     if (key !== undefined) {
       console.log(`Decrypting ${name}...`);
@@ -233,6 +243,11 @@ async function acb2wavs(acbPath, key, wavDir, volume, mode, skip) {
   const pathInfo = path.parse(acbPath);
   console.log(`Parsing ${pathInfo.base}...`);
   const acb = await parseAcb(acbPath);
+  let cueNameMap = {};
+  for (let i = 0; i < acb.CueNameTable.length; i++) {
+    const cueName = acb.CueNameTable[i];
+    cueNameMap[cueName.CueIndex] = cueName.CueName;
+  }
   if (wavDir === undefined) wavDir = path.join(pathInfo.dir, acb.Name);
   if (!fs.existsSync(wavDir)) {
     await mkdir(wavDir, { recursive: true });
@@ -247,7 +262,12 @@ async function acb2wavs(acbPath, key, wavDir, volume, mode, skip) {
     const isMemory = Waveform.Streaming === 0;
     const hcaBuffer = isMemory ? acb.memoryHcas[Waveform.MemoryAwbId] : acb.streamHcas[Waveform.StreamAwbPortNo][Waveform.StreamAwbId];
     const awbKey = isMemory ? acb.memoryHcas.config.key : acb.streamHcas[Waveform.StreamAwbPortNo].config.key;
-    const name = isMemory ? `memory_${++memory}.wav` : `stream_${++stream}.wav`;
+    let name = "";
+    if (i in cueNameMap) {
+      name = `${cueNameMap[i]}.wav`;
+    } else {
+      name = isMemory ? `memory_${++memory}.wav` : `stream_${++stream}.wav`;
+    }
     const wavPath = path.join(wavDir, name);
     await hca.decodeHcaToWav(hcaBuffer, key, awbKey, wavPath, volume, mode);
   }
