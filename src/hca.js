@@ -920,7 +920,8 @@ async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData, 
     let mp3Path = wavPath.replace("wav", "mp3");
     const encoder = new Lame({
       "output": mp3Path,
-      "bitrate": 128
+      "vbr": true,
+      "vbr-quality": 5,
     }).setBuffer(audioFileBuffer);
     encoder.encode();
   } else {
