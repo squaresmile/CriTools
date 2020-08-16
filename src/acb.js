@@ -247,7 +247,7 @@ async function acb2hcas(acbPath, key, hcaDir, type, skip) {
 }
 exports.acb2hcas = acb2hcas;
 
-async function acb2wavs(acbPath, key, wavDir, volume, mode, skip, acbBuffer = null, awbBuffer = null, mp3 = false) {
+async function acb2wavs(acbPath, key, wavDir, volume, mode, skip, acbBuffer = null, awbBuffer = null, format = "wav") {
   const pathInfo = path.parse(acbPath);
   // console.log(`Parsing ${pathInfo.base}...`);
   let acb;
@@ -282,7 +282,7 @@ async function acb2wavs(acbPath, key, wavDir, volume, mode, skip, acbBuffer = nu
       name = isMemory ? `memory_${++memory}.wav` : `stream_${++stream}.wav`;
     }
     const wavPath = path.join(wavDir, name);
-    await hca.decodeHcaToWav(hcaBuffer, key, awbKey, wavPath, volume, mode, mp3);
+    await hca.decodeHcaToWav(hcaBuffer, key, awbKey, wavPath, volume, mode, format);
   }
 }
 exports.acb2wavs = acb2wavs;

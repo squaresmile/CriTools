@@ -71,7 +71,7 @@ async function handlePathes(pathes, ext) {
     usage();
     return;
   }
-  let decrypt = false, key = undefined, awbKey = undefined, output = undefined, volume = 1, mode = 16, type = 1, skip = false, mp3 = false;
+  let decrypt = false, key = undefined, awbKey = undefined, output = undefined, volume = 1, mode = 16, type = 1, skip = false, format = "wav";
   let i = 3;
   const pathes = [];
   while (i < argv.length) {
@@ -92,8 +92,8 @@ async function handlePathes(pathes, ext) {
       type = parseInt(argv.splice(i, 1)[0], 10);
     } else if (arg === '-s' || arg === '--skip') {
       skip = true;
-    } else if (arg === '--mp3') {
-      mp3 = true;
+    } else if (arg === '-f' || arg === '--format') {
+      format = argv.splice(i, 1)[0];
     } else {
       pathes.push(arg);
     }
@@ -152,7 +152,7 @@ async function handlePathes(pathes, ext) {
         break;
       case 'cpk2wavs':
         await handlePathes(pathes, '.bytes');
-        for (let i = 0; i < pathes.length; i++) await cpk.cpk2wavs(pathes[i], key, output, volume, mode, skip, mp3);
+        for (let i = 0; i < pathes.length; i++) await cpk.cpk2wavs(pathes[i], key, output, volume, mode, skip, format);
         break;
       default:
         usage();

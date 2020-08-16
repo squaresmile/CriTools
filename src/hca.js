@@ -5,7 +5,6 @@ const path = require('path');
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 const appendFile = util.promisify(fs.appendFile);
-const Lame = require("node-lame").Lame;
 
 // DECRYPT START
 function initAthTable(table, type, key) {
@@ -851,7 +850,7 @@ async function decodeHca(buffer, key, awbKey, volume) {
 }
 exports.decodeHca = decodeHca;
 
-async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData, mp3 = false) {
+async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData, format = "wav") {
   const wavRiff = Buffer.alloc(36);
   wavRiff.write('RIFF', 0);
   wavRiff.write('WAVEfmt ', 8);
@@ -916,12 +915,21 @@ async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData, 
   // if (n > 0) await appendFile(wavPath, buffer.slice(0, n));
   if (n > 0) outFileBuffers.push(buffer.slice(0, n));
   let audioFileBuffer = Buffer.concat(outFileBuffers);
-  if (mp3) {
+  if (format === "mp3") {
+    const Lame = require("node-lame").Lame;
     let mp3Path = wavPath.replace("wav", "mp3");
     const encoder = new Lame({
       "output": mp3Path,
       "vbr": true,
-      "vbr-quality": 5,
+      "vbr-quality": 4,
+    }).setBuffer(audioFileBuffer);
+    encoder.encode();
+  } else if (format === "aac") {
+    const Fdkaac = require("node-fdkaac").Fdkaac;
+    let aacPath = wavPath.replace("wav", "aac");
+    const encoder = new Fdkaac({
+        "output": aacPath,
+        "bitrate-mode": 4
     }).setBuffer(audioFileBuffer);
     encoder.encode();
   } else {
@@ -930,7 +938,7 @@ async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData, 
 }
 exports.writeWavFile = writeWavFile;
 
-async function decodeHcaToWav(buffer, key, awbKey, wavPath, volume, mode, mp3 = false) {
+async function decodeHcaToWav(buffer, key, awbKey, wavPath, volume, mode, format = "wav") {
   if (mode === undefined || mode === null) mode = 16;
   if (typeof (buffer) === 'string') {
     const pathInfo = path.parse(buffer);
@@ -939,6 +947,6 @@ async function decodeHcaToWav(buffer, key, awbKey, wavPath, volume, mode, mp3 = 
   }
   const hca = await decodeHca(buffer, key, awbKey, volume);
   // console.log(`Writing ${path.parse(wavPath).base}...`);
-  await writeWavFile(wavPath, mode, hca.channelCount, hca.samplingRate, hca.pcmData, mp3);
+  await writeWavFile(wavPath, mode, hca.channelCount, hca.samplingRate, hca.pcmData, format);
 }
 exports.decodeHcaToWav = decodeHcaToWav;

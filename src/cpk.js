@@ -58,7 +58,7 @@ async function extractCpk(cpkPath, output) {
 }
 exports.extractCpk = extractCpk;
 
-async function cpk2wavs(cpkPath, key, output, volume, mode, skip, mp3 = false) {
+async function cpk2wavs(cpkPath, key, output, volume, mode, skip, format = "wav") {
   console.log(`Extracting ${cpkPath} ...`);
   const cpk = await parseCpk(cpkPath);
   if (!cpk) return;
@@ -79,7 +79,7 @@ async function cpk2wavs(cpkPath, key, output, volume, mode, skip, mp3 = false) {
       awbBuffer = fileBuffer;
     }
   }
-  acb.acb2wavs(acbFile, key, output, volume, mode, skip, acbBuffer, awbBuffer, mp3)
+  acb.acb2wavs(acbFile, key, output, volume, mode, skip, acbBuffer, awbBuffer, format)
 }
 exports.cpk2wavs = cpk2wavs;
 
