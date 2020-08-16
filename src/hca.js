@@ -926,7 +926,7 @@ async function writeWavFile(wavPath, mode, channelCount, samplingRate, pcmData, 
     encoder.encode();
   } else if (format === "aac") {
     const Fdkaac = require("node-fdkaac").Fdkaac;
-    let aacPath = wavPath.replace("wav", "aac");
+    let aacPath = wavPath.replace("wav", "m4a");
     const encoder = new Fdkaac({
         "output": aacPath,
         "bitrate-mode": 4
