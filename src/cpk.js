@@ -83,6 +83,31 @@ async function cpk2wavs(cpkPath, key, output, volume, mode, skip, format = "wav"
 }
 exports.cpk2wavs = cpk2wavs;
 
+async function cpk2hcas(cpkPath, key, output, type, skip) {
+  console.log(`Extracting ${cpkPath} ...`);
+  const cpk = await parseCpk(cpkPath);
+  if (!cpk) return;
+  if (output === undefined) output = path.parse(cpkPath).dir;
+  output = path.join(output, cpkPath.replace(".cpk.bytes", ""));
+  let acbBuffer, awbBuffer, acbFile;
+  for (let i = 0; i < cpk.toc.length; i++) {
+    const item = cpk.toc[i];
+    let buffer = cpk.buffer;
+    const offset = (Number)(cpk.info.TocOffset + item.FileOffset);
+    let fileBuffer = buffer.slice(offset, offset + item.FileSize);
+    fileBuffer = extract(fileBuffer);
+    if (item.FileName.includes("acb")) {
+      acbBuffer = fileBuffer;
+      acbFile = item.FileName;
+    }
+    if (item.FileName.includes("awb")) {
+      awbBuffer = fileBuffer;
+    }
+  }
+  acb.acb2hcas(acbFile, key, output, type, skip, acbBuffer, awbBuffer)
+}
+exports.cpk2hcas = cpk2hcas;
+
 function extract(buffer) {
   if ('CRILAYLA' !== buffer.slice(0, 0x8).toString()) return buffer;
   const uncompressSize = buffer.readUInt32LE(0x8);

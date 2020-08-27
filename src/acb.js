@@ -218,10 +218,15 @@ async function mixAcb(acbPath, key, wavDir, mode, skip) {
 }
 exports.mixAcb = mixAcb;
 
-async function acb2hcas(acbPath, key, hcaDir, type, skip) {
+async function acb2hcas(acbPath, key, hcaDir, type, skip, acbBuffer = null, awbBuffer = null) {
   const pathInfo = path.parse(acbPath);
-  console.log(`Parsing ${pathInfo.base}...`);
-  const acb = await parseAcb(acbPath);
+  // console.log(`Parsing ${pathInfo.base}...`);
+  let acb;
+  if (acbBuffer && awbBuffer) {
+    acb = await parseAcb(acbPath, acbBuffer, awbBuffer);
+  } else {
+    acb = await parseAcb(acbPath);
+  }
   let cueNameMap = {};
   for (let i = 0; i < acb.CueNameTable.length; i++) {
     const cueName = acb.CueNameTable[i];
@@ -234,7 +239,7 @@ async function acb2hcas(acbPath, key, hcaDir, type, skip) {
     console.log(`Skipped ${pathInfo.base}...`);
     return;
   }
-  console.log(`Extracting ${pathInfo.base}...`);
+  // console.log(`Extracting ${pathInfo.base}...`);
   let memory = 0, stream = 0;
   for (let i = 0; i < acb.WaveformTable.length; i++) {
     const Waveform = acb.WaveformTable[i];
@@ -249,10 +254,10 @@ async function acb2hcas(acbPath, key, hcaDir, type, skip) {
     }
     const hcaPath = path.join(hcaDir, name);
     if (key !== undefined) {
-      console.log(`Decrypting ${name}...`);
+      // console.log(`Decrypting ${name}...`);
       await hca.decryptHca(hcaBuffer, key, awbKey, type);
     }
-    console.log(`Writing ${name}...`);
+    // console.log(`Writing ${name}...`);
     await writeFile(hcaPath, hcaBuffer);
   }
 }

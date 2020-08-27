@@ -154,6 +154,10 @@ async function handlePathes(pathes, ext) {
         await handlePathes(pathes, '.bytes');
         for (let i = 0; i < pathes.length; i++) await cpk.cpk2wavs(pathes[i], key, output, volume, mode, skip, format);
         break;
+      case 'cpk2hcas':
+        await handlePathes(pathes, '.bytes');
+        for (let i = 0; i < pathes.length; i++) await cpk.cpk2hcas(pathes[i], key, output, type, skip);
+        break;
       default:
         usage();
         break;
