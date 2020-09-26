@@ -58,12 +58,12 @@ async function extractCpk(cpkPath, output) {
 }
 exports.extractCpk = extractCpk;
 
-async function cpk2wavs(cpkPath, key, output, volume, mode, skip, format = "wav") {
+async function cpk2wavs(cpkPath, key, output, basePath, cpkExt, volume, mode, skip, format = "wav") {
   console.log(`Extracting ${cpkPath} ...`);
   const cpk = await parseCpk(cpkPath);
   if (!cpk) return;
   if (output === undefined) output = path.parse(cpkPath).dir;
-  output = path.join(output, cpkPath.replace(".cpk.bytes", ""));
+  output = path.join(output, path.relative(basePath, cpkPath).replace(cpkExt, ""));
   let acbBuffer, awbBuffer, acbFile;
   for (let i = 0; i < cpk.toc.length; i++) {
     const item = cpk.toc[i];
@@ -83,12 +83,12 @@ async function cpk2wavs(cpkPath, key, output, volume, mode, skip, format = "wav"
 }
 exports.cpk2wavs = cpk2wavs;
 
-async function cpk2hcas(cpkPath, key, output, type, skip) {
+async function cpk2hcas(cpkPath, key, output, basePath, type, skip) {
   console.log(`Extracting ${cpkPath} ...`);
   const cpk = await parseCpk(cpkPath);
   if (!cpk) return;
   if (output === undefined) output = path.parse(cpkPath).dir;
-  output = path.join(output, cpkPath.replace(".cpk.bytes", ""));
+  output = path.join(output, path.relative(basePath, cpkPath).replace(cpkExt, ""));
   let acbBuffer, awbBuffer, acbFile;
   for (let i = 0; i < cpk.toc.length; i++) {
     const item = cpk.toc[i];

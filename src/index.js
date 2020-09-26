@@ -24,7 +24,8 @@ function usage() {
   console.log(`\tdecrypt_hca [-k <key>] [-w <awbKey>] [-t <type>] <hcaPath>...`);
   console.log(`\tacb_mix [-k <key>] [-o <outputDir>] [-v <volume>] [-m <mode>] [-s] <acbPath>...`);
   console.log(`\textract_cpk [-o <outputDir>] <cpkPath>...`);
-  console.log(`\cpk2wavs [-k <key>] [-o <outputDir>] [-v <volume>] [-m <mode>] [-s] <cpkPath>...`);
+  console.log(`\tcpk2wavs [-k <key>] [-o <outputDir>] [-f format] [-v <volume>] [-m <mode>] [-s] <cpkPath>...`);
+  console.log(`\tcpk2hcas [-k <key>] [-o <outputDir>] [-t <type>] [-s] <cpkPath>...`);
   console.log(`Options:`);
   console.log(`\t-d / --decrypt          Decrypt hca files`);
   console.log(`\t-k / --key <key>        Decrypt key`);
@@ -34,11 +35,12 @@ function usage() {
   console.log(`\t-v / --volume <volume>  Wav Volume (Default: 1.0)`);
   console.log(`\t-m / --mode <mode>      Wav Bit Mode (Default: 16)`);
   console.log(`\t-s / --skip             Skip exists files`);
-  console.log(`\t--mp3                   Output mp3 files for cpk2wavs`);
+  console.log(`\t-f / --format           mp3 or aac`);
 }
 
 async function handlePathes(pathes, ext) {
   let i = 0;
+  let basePathes = [];
   while (i < pathes.length) {
     const path1 = pathes[i];
     if (fs.existsSync(path1)) {
@@ -51,18 +53,22 @@ async function handlePathes(pathes, ext) {
           const path2 = path.join(path1, base);
           const stats2 = await lstat(path2);
           if (path.parse(base).ext === ext || stats2.isDirectory()) {
+            basePathes.push(path1);
             pathes.push(path2);
           }
         }
       } else if (ext && path.parse(path1).ext !== ext) {
         pathes.splice(i, 1);
+        basePathes.splice(i, 1)
       } else {
+        basePathes.push("");
         i++;
       }
     } else {
       pathes.splice(i, 1);
     }
   }
+  return basePathes;
 }
 
 (async () => {
@@ -151,12 +157,20 @@ async function handlePathes(pathes, ext) {
         for (let i = 0; i < pathes.length; i++) await cpk.extractCpk(pathes[i], output);
         break;
       case 'cpk2wavs':
-        await handlePathes(pathes, '.bytes');
-        for (let i = 0; i < pathes.length; i++) await cpk.cpk2wavs(pathes[i], key, output, volume, mode, skip, format);
+        basePathes = await handlePathes(pathes, '.cpk');
+        for (let i = 0; i < pathes.length; i++) await cpk.cpk2wavs(pathes[i], key, output, basePathes[i], ".cpk", volume, mode, skip, format);
         break;
       case 'cpk2hcas':
-        await handlePathes(pathes, '.bytes');
-        for (let i = 0; i < pathes.length; i++) await cpk.cpk2hcas(pathes[i], key, output, type, skip);
+        basePathes = await handlePathes(pathes, '.cpk');
+        for (let i = 0; i < pathes.length; i++) await cpk.cpk2hcas(pathes[i], key, output, basePathes[i], ".cpk", type, skip);
+        break;
+      case 'aacpk2wavs':
+        basePathes = await handlePathes(pathes, '.bytes');
+        for (let i = 0; i < pathes.length; i++) await cpk.cpk2wavs(pathes[i], key, output, basePathes[i], ".cpk.bytes", volume, mode, skip, format);
+        break;
+      case 'aacpk2hcas':
+        basePathes = await handlePathes(pathes, '.bytes');
+        for (let i = 0; i < pathes.length; i++) await cpk.cpk2hcas(pathes[i], key, output, basePathes[i], ".cpk.bytes", type, skip);
         break;
       default:
         usage();
