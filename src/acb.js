@@ -15,7 +15,7 @@ async function parseAcb(acbPath, acbBuffer = null, awbBuffer = null) {
   const pathInfo = path.parse(acbPath);
   let buffer;
   if (acbBuffer) {
-    buffer = await acbBuffer;
+    buffer = acbBuffer;
   } else {
     buffer = await readFile(acbPath);
   }
@@ -29,11 +29,11 @@ async function parseAcb(acbPath, acbBuffer = null, awbBuffer = null) {
   for (let i = 0; i < acb.StreamAwbHash.length; i++) {
     const StreamAwb = acb.StreamAwbHash[i];
     const awbPath = path.join(pathInfo.dir, StreamAwb.Name + '.awb');
-    if (fs.existsSync(awbPath)) {
-      const obj = await afs2.parseAFS2(awbPath);
-      acb.streamHcas.push(obj);
-    } else if (awbBuffer) {
+    if (awbBuffer) {
       const obj = await afs2.parseAFS2(awbBuffer);
+      acb.streamHcas.push(obj);
+    } else if (fs.existsSync(awbPath)) {
+      const obj = await afs2.parseAFS2(awbPath);
       acb.streamHcas.push(obj);
     }
   }
@@ -267,11 +267,7 @@ async function acb2wavs(acbPath, key, wavDir, volume, mode, skip, acbBuffer = nu
   const pathInfo = path.parse(acbPath);
   // console.log(`Parsing ${pathInfo.base}...`);
   let acb;
-  if (acbBuffer && awbBuffer) {
-    acb = await parseAcb(acbPath, acbBuffer, awbBuffer);
-  } else {
-    acb = await parseAcb(acbPath);
-  }
+  acb = await parseAcb(acbPath, acbBuffer, awbBuffer);
   let cueNameMap = {};
   for (let i = 0; i < acb.CueNameTable.length; i++) {
     const cueName = acb.CueNameTable[i];
