@@ -47,6 +47,7 @@ async function handlePathes(pathes, ext) {
       const stats1 = await lstat(path1);
       if (stats1.isDirectory()) {
         pathes.splice(i, 1);
+        basePathes.splice(i, 1);
         const files = await readdir(path1);
         for (let j = 0; j < files.length; j++) {
           const base = files[j];
@@ -59,13 +60,13 @@ async function handlePathes(pathes, ext) {
         }
       } else if (ext && path.parse(path1).ext !== ext) {
         pathes.splice(i, 1);
-        basePathes.splice(i, 1)
+        basePathes.splice(i, 1);
       } else {
-        basePathes.push("");
         i++;
       }
     } else {
       pathes.splice(i, 1);
+      basePathes.splice(i, 1);
     }
   }
   return basePathes;
